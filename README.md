@@ -21,3 +21,5 @@ Output:
 │ trela     │ main   │ 2023-12-13T14:42:42+01:00 │ 0d 0h 5m        │
 └───────────┴────────┴───────────────────────────┴─────────────────┘
 ```
+
+`gitty` defaults to find git repositories in the current working directory ('`.`').
