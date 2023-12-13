@@ -14,7 +14,7 @@ import (
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/jedib0t/go-pretty/v6/table"
 	"github.com/jedib0t/go-pretty/v6/text"
-	"github.com/mikejoh/gity/internal/buildinfo"
+	"github.com/mikejoh/gitty/internal/buildinfo"
 )
 
 type gittyOptions struct {

@@ -2,7 +2,7 @@ APPNAME := $(notdir $(CURDIR))
 
 GIT_TAG := $(shell git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
 GIT_SHA := $(shell git rev-parse --short HEAD)
-VERSION := $(GIT_TAG)-$(GIT_SHA)$(shell git diff --quiet || echo "-dirty")
+VERSION := $(GIT_TAG)$(shell git diff --quiet || echo "-$(GIT_SHA)-dirty")
 
 CMDPATH := ./cmd/$(APPNAME)
 BUILDPATH := ./build
@@ -17,7 +17,8 @@ GOGET := $(GOCMD) get
 
 LDFLAGS := -ldflags '-s -w \
 						-X=github.com/mikejoh/$(APPNAME)/internal/buildinfo.Version=$(VERSION) \
-						-X=github.com/mikejoh/$(APPNAME)/internal/buildinfo.Name=$(APPNAME)'
+						-X=github.com/mikejoh/$(APPNAME)/internal/buildinfo.Name=$(APPNAME) \
+						-X=github.com/mikejoh/$(APPNAME)/internal/buildinfo.GitSHA=$(GIT_SHA)'
 
 all: test build
 
@@ -41,4 +42,4 @@ install:
 deps:
 	$(GOGET) ./...
 
-.PHONY: all build
+.PHONY: all build test clean run install deps
