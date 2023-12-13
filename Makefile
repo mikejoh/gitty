@@ -16,8 +16,8 @@ GOTEST := $(GOCMD) test
 GOGET := $(GOCMD) get
 
 LDFLAGS := -ldflags '-s -w \
-						-X=github.com/mikejoh/$(APPNAME)/internal/version.Version=$(VERSION) \
-						-X=github.com/mikejoh/$(APPNAME)/internal/version.Name=$(APPNAME)'
+						-X=github.com/mikejoh/$(APPNAME)/internal/buildinfo.Version=$(VERSION) \
+						-X=github.com/mikejoh/$(APPNAME)/internal/buildinfo.Name=$(APPNAME)'
 
 all: test build
 
