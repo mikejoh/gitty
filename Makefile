@@ -14,6 +14,7 @@ GOBUILD := $(GOCMD) build
 GOCLEAN := $(GOCMD) clean
 GOTEST := $(GOCMD) test
 GOGET := $(GOCMD) get
+GOMOD := $(GOCMD) mod
 
 LDFLAGS := -ldflags '-s -w \
 						-X=github.com/mikejoh/$(APPNAME)/internal/buildinfo.Version=$(VERSION) \
@@ -28,6 +29,18 @@ build:
 test: 
 	$(GOTEST) -v ./...
 
+test_coverage:
+ 	$(GOTEST) ./... -coverprofile=coverage.out
+
+dep:
+ 	$(GOCMD) mod download
+
+vet:
+	$(GOCMD) vet ./...
+
+lint:
+	golangci-lint run -v --timeout=15m ./...
+
 clean: 
 	$(GOCLEAN)
 	rm -f $(BUILDPATH)/$(APPNAME)
@@ -39,7 +52,4 @@ run:
 install:
 	cp $(BUILDPATH)/$(APPNAME) ~/.local/bin
 
-deps:
-	$(GOGET) ./...
-
-.PHONY: all build test clean run install deps
+.PHONY: all build test test_coverage clean run install dep vet lint
