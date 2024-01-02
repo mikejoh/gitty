@@ -29,11 +29,11 @@ build:
 test: 
 	$(GOTEST) -v ./...
 
-test_coverage:
- 	$(GOTEST) ./... -coverprofile=coverage.out
+testcov:
+	$(GOTEST) ./... -coverprofile=coverage.out
 
 dep:
- 	$(GOCMD) mod download
+	$(GOCMD) mod download
 
 vet:
 	$(GOCMD) vet ./...
