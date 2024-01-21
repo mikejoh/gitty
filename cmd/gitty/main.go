@@ -18,13 +18,15 @@ import (
 )
 
 type gittyOptions struct {
-	path    string
-	version bool
+	path     string
+	branches bool
+	version  bool
 }
 
 func main() {
 	var gittyOpts gittyOptions
 	flag.StringVar(&gittyOpts.path, "path", ".", "The path to scan for branches.")
+	flag.BoolVar(&gittyOpts.branches, "branches", false, "Loop through all branches and print the last commit age for each branch.")
 	flag.BoolVar(&gittyOpts.version, "version", false, "Print the version number.")
 	flag.Parse()
 
@@ -52,7 +54,6 @@ func main() {
 	rows := []table.Row{}
 
 	for _, path := range gitRepoPaths {
-
 		repo, err := git.PlainOpen(path)
 		if errors.Is(err, git.ErrRepositoryNotExists) {
 			log.Fatal(err)
@@ -70,54 +71,109 @@ func main() {
 
 		joinedRemotes := strings.Join(remoteNames, ", ")
 
-		head, err := repo.Head()
-		if err != nil {
-			continue
-		}
-
-		// Skip if no commits exists
-		_, err = repo.CommitObject(head.Hash())
-		if err != nil {
-			continue
-		}
-
-		// Skip detached HEAD
-		if head.Name() == plumbing.HEAD {
-			continue
-		}
-
-		ref, err := repo.Reference(plumbing.HEAD, true)
-		if err != nil {
-			log.Fatalf("%s: %s", path, err)
-		}
-
 		var lastCommitSinceNow string
 
-		commit, err := repo.CommitObject(ref.Hash())
-		if err == nil {
-			duration := currentTime.Sub(commit.Author.When)
-			days := duration.Hours() / 24
-			hours := int(duration.Hours()) % 24
-			minutes := int(duration.Minutes()) % 60
-			lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
-		} else if err != nil {
-			log.Fatal(err)
-		}
-
-		if path == "." {
-			path, err = os.Getwd()
+		if gittyOpts.branches {
+			branchIter, err := repo.Branches()
 			if err != nil {
 				log.Fatal(err)
 			}
-		}
 
-		rows = append(rows, table.Row{
-			path,
-			ref.Name().Short(),
-			commit.Author.When,
-			lastCommitSinceNow,
-			joinedRemotes,
-		})
+			err = branchIter.ForEach(func(branch *plumbing.Reference) error {
+				// Skip if no commits exists
+				_, err := repo.CommitObject(branch.Hash())
+				if err != nil {
+					return nil
+				}
+
+				// Skip detached HEAD
+				if branch.Name() == plumbing.HEAD {
+					return nil
+				}
+
+				var lastCommitSinceNow string
+
+				commit, err := repo.CommitObject(branch.Hash())
+				if err == nil {
+					duration := currentTime.Sub(commit.Author.When)
+					days := duration.Hours() / 24
+					hours := int(duration.Hours()) % 24
+					minutes := int(duration.Minutes()) % 60
+					lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
+				} else if err != nil {
+					log.Fatal(err)
+				}
+
+				if path == "." {
+					path, err = os.Getwd()
+					if err != nil {
+						log.Fatal(err)
+					}
+				}
+
+				rows = append(rows, table.Row{
+					path,
+					branch.Name().Short(),
+					commit.Author.When,
+					lastCommitSinceNow,
+					joinedRemotes,
+				})
+				return nil
+			})
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			continue
+		} else {
+
+			head, err := repo.Head()
+			if err != nil {
+				continue
+			}
+
+			// Skip if no commits exists
+			_, err = repo.CommitObject(head.Hash())
+			if err != nil {
+				continue
+			}
+
+			// Skip detached HEAD
+			if head.Name() == plumbing.HEAD {
+				continue
+			}
+
+			ref, err := repo.Reference(plumbing.HEAD, true)
+			if err != nil {
+				log.Fatalf("%s: %s", path, err)
+			}
+
+			commit, err := repo.CommitObject(ref.Hash())
+			if err == nil {
+				duration := currentTime.Sub(commit.Author.When)
+				days := duration.Hours() / 24
+				hours := int(duration.Hours()) % 24
+				minutes := int(duration.Minutes()) % 60
+				lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
+			} else if err != nil {
+				log.Fatal(err)
+			}
+
+			if path == "." {
+				path, err = os.Getwd()
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
+
+			rows = append(rows, table.Row{
+				path,
+				ref.Name().Short(),
+				commit.Author.When,
+				lastCommitSinceNow,
+				joinedRemotes,
+			})
+		}
 	}
 
 	tw := table.NewWriter()
