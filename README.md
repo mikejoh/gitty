@@ -1,5 +1,9 @@
 # gitty
 
+<p align="center">
+<img src="https://github.com/mikejoh/gitty/assets/899665/57b83aee-3f75-4cde-a6ad-e9e052f0d6ba" alt="gitty" />
+</p>
+
 `gitty` - Output some nice-to-have information about your local git repositories.
 
 ## Install
