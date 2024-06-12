@@ -17,33 +17,55 @@ import (
 	"github.com/mikejoh/gitty/internal/buildinfo"
 )
 
+const maxBranchNameLength = 25
+
 type gittyOptions struct {
-	path     string
-	branches bool
-	version  bool
+	path               string
+	branches           bool
+	version            bool
+	skipDirs           string
+	truncateBranchName bool
+}
+
+var skipDirs = []string{
+	".terraform",
 }
 
 func main() {
 	var gittyOpts gittyOptions
 	flag.StringVar(&gittyOpts.path, "path", ".", "The path to scan for branches.")
+	flag.StringVar(&gittyOpts.skipDirs, "skip-dirs", "", "Comma separated list of directories to skip.")
 	flag.BoolVar(&gittyOpts.branches, "branches", false, "Loop through all branches and print the last commit age for each branch.")
+	flag.BoolVar(&gittyOpts.truncateBranchName, "truncate", false, "Truncate branch names to 25 characters.")
 	flag.BoolVar(&gittyOpts.version, "version", false, "Print the version number.")
 	flag.Parse()
 
 	if gittyOpts.version {
-		fmt.Println(buildinfo.Get())
+		log.Println(buildinfo.Get())
 		os.Exit(0)
+	}
+
+	if gittyOpts.skipDirs != "" {
+		sd := strings.Split(gittyOpts.skipDirs, ",")
+		skipDirs = append(skipDirs, sd...)
 	}
 
 	var gitRepoPaths []string
 	currentTime := time.Now()
 
-	err := filepath.Walk(gittyOpts.path, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(gittyOpts.path, func(path string, fileInfo os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if info.IsDir() && info.Name() == ".git" {
-			gitRepoPaths = append(gitRepoPaths, filepath.Dir(path))
+		if fileInfo.IsDir() {
+			for _, dir := range skipDirs {
+				if fileInfo.Name() == dir {
+					return filepath.SkipDir
+				}
+			}
+			if fileInfo.Name() == ".git" {
+				gitRepoPaths = append(gitRepoPaths, filepath.Dir(path))
+			}
 		}
 		return nil
 	})
@@ -104,18 +126,27 @@ func main() {
 					log.Fatal(err)
 				}
 
-				if path == "." {
-					path, err = os.Getwd()
-					if err != nil {
-						log.Fatal(err)
+				if gittyOpts.truncateBranchName {
+					branchName := branch.Name().Short()
+					if len(branchName) > maxBranchNameLength {
+						branchName = fmt.Sprintf("%.20s...", branchName)
 					}
+
+					rows = append(rows, table.Row{
+						branchName,
+						commit.Author.When,
+						lastCommitSinceNow,
+						commit.Author.Name,
+						joinedRemotes,
+					})
+					return nil
 				}
 
 				rows = append(rows, table.Row{
-					path,
 					branch.Name().Short(),
 					commit.Author.When,
 					lastCommitSinceNow,
+					commit.Author.Name,
 					joinedRemotes,
 				})
 				return nil
@@ -125,59 +156,58 @@ func main() {
 			}
 
 			continue
-		} else {
-
-			head, err := repo.Head()
-			if err != nil {
-				continue
-			}
-
-			// Skip if no commits exists
-			_, err = repo.CommitObject(head.Hash())
-			if err != nil {
-				continue
-			}
-
-			// Skip detached HEAD
-			if head.Name() == plumbing.HEAD {
-				continue
-			}
-
-			ref, err := repo.Reference(plumbing.HEAD, true)
-			if err != nil {
-				log.Fatalf("%s: %s", path, err)
-			}
-
-			commit, err := repo.CommitObject(ref.Hash())
-			if err == nil {
-				duration := currentTime.Sub(commit.Author.When)
-				days := duration.Hours() / 24
-				hours := int(duration.Hours()) % 24
-				minutes := int(duration.Minutes()) % 60
-				lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
-			} else if err != nil {
-				log.Fatal(err)
-			}
-
-			if path == "." {
-				path, err = os.Getwd()
-				if err != nil {
-					log.Fatal(err)
-				}
-			}
-
-			rows = append(rows, table.Row{
-				path,
-				ref.Name().Short(),
-				commit.Author.When,
-				lastCommitSinceNow,
-				joinedRemotes,
-			})
 		}
+
+		head, err := repo.Head()
+		if err != nil {
+			continue
+		}
+
+		// Skip if no commits exists
+		_, err = repo.CommitObject(head.Hash())
+		if err != nil {
+			continue
+		}
+
+		// Skip detached HEAD
+		if head.Name() == plumbing.HEAD {
+			continue
+		}
+
+		ref, err := repo.Reference(plumbing.HEAD, true)
+		if err != nil {
+			log.Fatalf("%s: %s", path, err)
+		}
+
+		commit, err := repo.CommitObject(ref.Hash())
+		if err == nil {
+			duration := currentTime.Sub(commit.Author.When)
+			days := duration.Hours() / 24
+			hours := int(duration.Hours()) % 24
+			minutes := int(duration.Minutes()) % 60
+			lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
+		} else if err != nil {
+			log.Fatal(err)
+		}
+
+		rows = append(rows, table.Row{
+			ref.Name().Short(),
+			commit.Author.When,
+			lastCommitSinceNow,
+			commit.Author.Name,
+			joinedRemotes,
+		})
+
 	}
 
 	tw := table.NewWriter()
-	header := table.Row{"directory", "branch", "last commit", "last commit age", "remotes"}
+	header := table.Row{
+		"branch",
+		"last commit",
+		"age",
+		"author",
+		"remotes",
+	}
 	tw.AppendHeader(header)
 	tw.AppendRows(rows)
 	tw.Style().Title.Align = text.AlignCenter
@@ -192,86 +222,3 @@ func main() {
 	})
 	tw.Render()
 }
-
-// // Fetch the latest updates from origin
-// err = repo.Fetch(&git.FetchOptions{})
-// if errors.Is(err, git.NoErrAlreadyUpToDate) {
-// 	log.Printf("%s is already up to date!", path)
-// } else if err != nil {
-// 	log.Fatal(err)
-// }
-
-// // Get the commit history from HEAD
-// cIter, err := repo.Log(&git.LogOptions{From: head.Hash()})
-// if err != nil {
-// 	log.Fatal(err)
-// }
-
-// localCount, originCount := 0, 0
-
-// // Count local commits
-// err = cIter.ForEach(func(c *object.Commit) error {
-// 	localCount++
-// 	return nil
-// })
-// if err != nil {
-// 	log.Fatal(err)
-// }
-
-// // Get the reference for origin/HEAD
-// originRef, err := repo.Reference("refs/remotes/origin/main", true)
-// if err != nil {
-// 	// If origin/main does not exist, try origin/master
-// 	originRef, err = repo.Reference("refs/remotes/origin/master", true)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
-
-// // Get the commit history from origin/HEAD
-// cIter, err = repo.Log(&git.LogOptions{From: originRef.Hash()})
-// if err != nil {
-// 	log.Fatal(err)
-// }
-// // Count origin commits
-// err = cIter.ForEach(func(c *object.Commit) error {
-// 	originCount++
-// 	return nil
-// })
-// if err != nil {
-// 	log.Fatal(err)
-// }
-
-// // Get the remote HEAD reference
-// remoteRef, err := r.Reference(plumbing.NewRemoteReferenceName("origin", "master"), true)
-// if err != nil {
-// 	fmt.Println(err)
-// 	return
-// }
-
-// // Create the commit iterators
-// localIter, err := r.Log(&git.LogOptions{From: headRef.Hash()})
-// if err != nil {
-// 	fmt.Println(err)
-// 	return
-// }
-
-// remoteIter, err := r.Log(&git.LogOptions{From: remoteRef.Hash()})
-// if err != nil {
-// 	fmt.Println(err)
-// 	return
-// }
-
-// // Count the number of commits
-// localCount, remoteCount := 0, 0
-// localIter.ForEach(func(c *object.Commit) error {
-// 	localCount++
-// 	return nil
-// })
-// remoteIter.ForEach(func(c *object.Commit) error {
-// 	remoteCount++
-// 	return nil
-// })
-
-// fmt.Printf("Number of local commits: %d\n", localCount)
-// fmt.Printf("Number of remote commits: %d\n", remoteCount)
