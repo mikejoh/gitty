@@ -8,8 +8,27 @@
 
 ## Install
 
-1. `make build`
-2. `make install`
+### From source
+
+1. `git clone https://github.com/mikejoh/gitty.git`
+2. `cd gitty`
+3. `make build`
+4. `make install` (assumes thath `~/.local/bin` is used)
+
+### Download and run
+
+1. Download (using `v0.1.3` as an example):
+```
+curl -LO https://github.com/mikejoh/gitty/releases/download/0.1.3/gitty_0.1.3_linux_amd64.tar.gz
+```
+2. Unpack:
+```
+tar xzvf gitty_0.1.3_linux_amd64.tar.gz
+```
+3. Run:
+```
+./gitty -version
+```
 
 ## Usage
 
