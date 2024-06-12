@@ -49,5 +49,3 @@ gitty -branches
 │ test   │ 2024-05-22T13:10:25+02:00 │ 21d 7h 36m │ Mikael Johansson │ origin  │
 └────────┴───────────────────────────┴────────────┴──────────────────┴─────────┘
 ```
-
-`gitty` defaults to find git repositories in the current working directory ('`.`').
