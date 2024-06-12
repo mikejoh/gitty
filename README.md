@@ -13,24 +13,41 @@
 
 ## Usage
 
-Point at a specific directory:
 ```
-gitty -path ./trela/
-┌───────────┬────────┬───────────────────────────┬─────────────────┐
-│ DIRECTORY │ BRANCH │ LAST COMMIT               │ LAST COMMIT AGE │
-├───────────┼────────┼───────────────────────────┼─────────────────┤
-│ trela     │ main   │ 2023-12-13T14:42:42+01:00 │ 0d 0h 5m        │
-└───────────┴────────┴───────────────────────────┴─────────────────┘
+Usage of gitty:
+  -branches
+    	Loop through all branches.
+  -path string
+    	The path to scan for branches. (default ".")
+  -skip-dirs string
+    	Comma separated list of directories to skip.
+  -truncate
+    	Truncate branch names to 25 characters.
+  -version
+    	Print the version number.
 ```
-Iterate through branches in dir '.':
+
+### Examples
+
+Local git repository:
+```
+gitty
+┌────────┬───────────────────────────┬────────────┬──────────────────┬─────────┐
+│ BRANCH │ LAST COMMIT               │ AGE        │ AUTHOR           │ REMOTES │
+├────────┼───────────────────────────┼────────────┼──────────────────┼─────────┤
+│ main   │ 2024-05-22T13:10:25+02:00 │ 21d 7h 35m │ Mikael Johansson │ origin  │
+└────────┴───────────────────────────┴────────────┴──────────────────┴─────────┘
+```
+
+Iterate through all branches in local repository:
 ```
 gitty -branches
-┌───────────┬────────┬───────────────────────────┬─────────────────┐
-│ DIRECTORY │ BRANCH │ LAST COMMIT               │ LAST COMMIT AGE │
-├───────────┼────────┼───────────────────────────┼─────────────────┤
-│ trela     │ main   │ 2023-12-13T14:42:42+01:00 │ 0d 0h 5m        │
-│ trela     │ test   │ 2023-12-18T12:32:42+01:00 │ 23d 3h 5m       │
-└───────────┴────────┴───────────────────────────┴─────────────────┘
+┌────────┬───────────────────────────┬────────────┬──────────────────┬─────────┐
+│ BRANCH │ LAST COMMIT               │ AGE        │ AUTHOR           │ REMOTES │
+├────────┼───────────────────────────┼────────────┼──────────────────┼─────────┤
+│ main   │ 2024-05-22T13:10:25+02:00 │ 21d 7h 36m │ Mikael Johansson │ origin  │
+│ test   │ 2024-05-22T13:10:25+02:00 │ 21d 7h 36m │ Mikael Johansson │ origin  │
+└────────┴───────────────────────────┴────────────┴──────────────────┴─────────┘
 ```
 
 `gitty` defaults to find git repositories in the current working directory ('`.`').

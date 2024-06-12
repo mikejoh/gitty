@@ -35,7 +35,7 @@ func main() {
 	var gittyOpts gittyOptions
 	flag.StringVar(&gittyOpts.path, "path", ".", "The path to scan for branches.")
 	flag.StringVar(&gittyOpts.skipDirs, "skip-dirs", "", "Comma separated list of directories to skip.")
-	flag.BoolVar(&gittyOpts.branches, "branches", false, "Loop through all branches and print the last commit age for each branch.")
+	flag.BoolVar(&gittyOpts.branches, "branches", false, "Loop through all branches.")
 	flag.BoolVar(&gittyOpts.truncateBranchName, "truncate", false, "Truncate branch names to 25 characters.")
 	flag.BoolVar(&gittyOpts.version, "version", false, "Print the version number.")
 	flag.Parse()
