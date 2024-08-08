@@ -86,8 +86,12 @@ func main() {
 			log.Fatal(err)
 		}
 
+		var originRemote string
 		var remoteNames []string
 		for _, remote := range remotes {
+			if remote.Config().Name == "origin" {
+				originRemote = remote.Config().URLs[0]
+			}
 			remoteNames = append(remoteNames, remote.Config().Name)
 		}
 
@@ -180,17 +184,22 @@ func main() {
 		}
 
 		commit, err := repo.CommitObject(ref.Hash())
-		if err == nil {
-			duration := currentTime.Sub(commit.Author.When)
-			days := duration.Hours() / 24
-			hours := int(duration.Hours()) % 24
-			minutes := int(duration.Minutes()) % 60
-			lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
-		} else if err != nil {
+		if err != nil {
 			log.Fatal(err)
 		}
 
+		duration := currentTime.Sub(commit.Author.When)
+		days := duration.Hours() / 24
+		hours := int(duration.Hours()) % 24
+		minutes := int(duration.Minutes()) % 60
+		lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
+
+		if originRemote == "" {
+			originRemote = filepath.Base(path)
+		}
+
 		rows = append(rows, table.Row{
+			strings.Trim(filepath.Base(originRemote), ".git"),
 			ref.Name().Short(),
 			commit.Author.When,
 			lastCommitSinceNow,
@@ -202,6 +211,7 @@ func main() {
 
 	tw := table.NewWriter()
 	header := table.Row{
+		"repository",
 		"branch",
 		"last commit",
 		"age",
