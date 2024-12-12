@@ -1,9 +1,10 @@
+version: 2
 project_name: gitty
 release:
   github:
     owner: mikejoh
     name: gitty
-  name_template: 'v{{.Tag}}'
+  name_template: 'v{{ .Tag }}'
 builds:
   - id: gitty
     targets:
