@@ -76,6 +76,11 @@ func main() {
 	rows := []table.Row{}
 
 	for _, path := range gitRepoPaths {
+		size, err := getDirSize(path)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		repo, err := git.PlainOpen(path)
 		if errors.Is(err, git.ErrRepositoryNotExists) {
 			log.Fatal(err)
@@ -137,6 +142,8 @@ func main() {
 					}
 
 					rows = append(rows, table.Row{
+						strings.Trim(filepath.Base(originRemote), ".git"),
+						"N/A",
 						branchName,
 						commit.Author.When,
 						lastCommitSinceNow,
@@ -147,6 +154,8 @@ func main() {
 				}
 
 				rows = append(rows, table.Row{
+					strings.Trim(filepath.Base(originRemote), ".git"),
+					"N/A",
 					branch.Name().Short(),
 					commit.Author.When,
 					lastCommitSinceNow,
@@ -200,6 +209,7 @@ func main() {
 
 		rows = append(rows, table.Row{
 			strings.Trim(filepath.Base(originRemote), ".git"),
+			fmt.Sprintf("%.2fMB", float64(size)/(1024*1024)),
 			ref.Name().Short(),
 			commit.Author.When,
 			lastCommitSinceNow,
@@ -212,6 +222,7 @@ func main() {
 	tw := table.NewWriter()
 	header := table.Row{
 		"repository",
+		"size",
 		"branch",
 		"last commit",
 		"age",
@@ -231,4 +242,21 @@ func main() {
 		{Name: "last commit", Mode: table.Dsc},
 	})
 	tw.Render()
+}
+
+func getDirSize(path string) (int64, error) {
+	var size int64
+
+	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		if !info.IsDir() {
+			size += info.Size()
+		}
+		return nil
+	})
+
+	return size, err
 }
