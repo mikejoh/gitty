@@ -4,7 +4,7 @@ go 1.23.4
 
 require (
 	github.com/go-git/go-git/v5 v5.13.2
-	github.com/jedib0t/go-pretty/v6 v6.6.6
+	github.com/jedib0t/go-pretty/v6 v6.6.7
 )
 
 require (
