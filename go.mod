@@ -3,7 +3,7 @@ module github.com/mikejoh/gitty
 go 1.23.4
 
 require (
-	github.com/go-git/go-git/v5 v5.16.0
+	github.com/go-git/go-git/v5 v5.16.3
 	github.com/jedib0t/go-pretty/v6 v6.6.8
 )
 
