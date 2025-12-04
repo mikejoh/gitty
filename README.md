@@ -4,7 +4,19 @@
 <img src="https://github.com/mikejoh/gitty/assets/899665/57b83aee-3f75-4cde-a6ad-e9e052f0d6ba" alt="gitty" />
 </p>
 
-`gitty` - Output some nice-to-have information about your local git repositories.
+`gitty` - A CLI tool to display useful information about your local Git repositories.
+
+---
+
+## Features
+
+- Display branch information, including the last commit, age, author, and remotes.
+- Filter commits by author.
+- Traverse all branches in a repository.
+- Skip specific directories during scanning.
+- Truncate long branch names for better readability.
+
+---
 
 ## Install
 
@@ -18,53 +30,61 @@
 ### Download and run
 
 1. Download (using `v0.1.3` as an example):
-```
+
+```bash
 curl -LO https://github.com/mikejoh/gitty/releases/download/0.1.3/gitty_0.1.3_linux_amd64.tar.gz
 ```
+
 2. Unpack:
-```
+
+```bash
 tar xzvf gitty_0.1.3_linux_amd64.tar.gz
 ```
+
 3. Run:
-```
-./gitty -version
+
+```bash
+./gitty --version
 ```
 
 ## Usage
 
-```
+```bash
 Usage of gitty:
   -branches
-    	Loop through all branches.
+     Loop through all branches.
   -path string
-    	The path to scan for branches. (default ".")
+     The path to scan for branches. (default ".")
   -skip-dirs string
-    	Comma separated list of directories to skip.
+     Comma separated list of directories to skip.
   -truncate
-    	Truncate branch names to 25 characters.
+     Truncate branch names to 25 characters.
   -version
-    	Print the version number.
+     Print the version number.
 ```
 
 ### Examples
 
 Local git repository:
-```
-gitty
-┌────────┬───────────────────────────┬────────────┬──────────────────┬─────────┐
-│ BRANCH │ LAST COMMIT               │ AGE        │ AUTHOR           │ REMOTES │
-├────────┼───────────────────────────┼────────────┼──────────────────┼─────────┤
-│ main   │ 2024-05-22T13:10:25+02:00 │ 21d 7h 35m │ Mikael Johansson │ origin  │
-└────────┴───────────────────────────┴────────────┴──────────────────┴─────────┘
+
+```bash
+gitty --path .
+┌────────────┬────────┬────────┬─────────────────────────────────┬──────────┬──────────────────┬─────────┐
+│ REPOSITORY │ SIZE   │ BRANCH │ LAST COMMIT                     │ AGE      │ AUTHOR           │ REMOTES │
+├────────────┼────────┼────────┼─────────────────────────────────┼──────────┼──────────────────┼─────────┤
+│ gitty      │ 6.67MB │ main   │ 2025-12-04 11:23:21 +0100 +0100 │ 0d 0h 1m │ Mikael Johansson │ origin  │
+└────────────┴────────┴────────┴─────────────────────────────────┴──────────┴──────────────────┴─────────┘
 ```
 
 Iterate through all branches in local repository:
-```
-gitty -branches
-┌────────┬───────────────────────────┬────────────┬──────────────────┬─────────┐
-│ BRANCH │ LAST COMMIT               │ AGE        │ AUTHOR           │ REMOTES │
-├────────┼───────────────────────────┼────────────┼──────────────────┼─────────┤
-│ main   │ 2024-05-22T13:10:25+02:00 │ 21d 7h 36m │ Mikael Johansson │ origin  │
-│ test   │ 2024-05-22T13:10:25+02:00 │ 21d 7h 36m │ Mikael Johansson │ origin  │
-└────────┴───────────────────────────┴────────────┴──────────────────┴─────────┘
+
+```bash
+gitty --path . --branches
+┌────────────┬──────┬─────────────────────────┬─────────────────────────────────┬──────────────┬──────────────────┬─────────┐
+│ REPOSITORY │ SIZE │ BRANCH                  │ LAST COMMIT                     │ AGE          │ AUTHOR           │ REMOTES │
+├────────────┼──────┼─────────────────────────┼─────────────────────────────────┼──────────────┼──────────────────┼─────────┤
+│ gitty      │ N/A  │ calc-disk-size-per-path │ 2025-01-13 08:49:02 +0100 +0100 │ 325d 2h 36m  │ Mikael Johansson │ origin  │
+│ gitty      │ N/A  │ iterate-on-branches     │ 2024-01-21 21:08:03 +0100 +0100 │ 682d 14h 17m │ Mikael Johansson │ origin  │
+│ gitty      │ N/A  │ main                    │ 2025-12-04 11:23:21 +0100 +0100 │ 0d 0h 1m     │ Mikael Johansson │ origin  │
+└────────────┴──────┴─────────────────────────┴─────────────────────────────────┴──────────────┴──────────────────┴─────────┘
 ```
