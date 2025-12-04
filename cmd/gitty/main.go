@@ -142,7 +142,7 @@ func main() {
 					}
 
 					rows = append(rows, table.Row{
-						strings.Trim(filepath.Base(originRemote), ".git"),
+						strings.TrimSuffix(filepath.Base(originRemote), ".git"),
 						"N/A",
 						branchName,
 						commit.Author.When,
@@ -154,7 +154,7 @@ func main() {
 				}
 
 				rows = append(rows, table.Row{
-					strings.Trim(filepath.Base(originRemote), ".git"),
+					strings.TrimSuffix(filepath.Base(originRemote), ".git"),
 					"N/A",
 					branch.Name().Short(),
 					commit.Author.When,
@@ -208,7 +208,7 @@ func main() {
 		}
 
 		rows = append(rows, table.Row{
-			strings.Trim(filepath.Base(originRemote), ".git"),
+			strings.TrimSuffix(filepath.Base(originRemote), ".git"),
 			fmt.Sprintf("%.2fMB", float64(size)/(1024*1024)),
 			ref.Name().Short(),
 			commit.Author.When,
