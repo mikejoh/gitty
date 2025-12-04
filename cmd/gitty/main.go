@@ -25,6 +25,7 @@ type gittyOptions struct {
 	version            bool
 	skipDirs           string
 	truncateBranchName bool
+	authorFilter       string // New flag for filtering by author
 }
 
 var skipDirs = []string{
@@ -38,6 +39,7 @@ func main() {
 	flag.BoolVar(&gittyOpts.branches, "branches", false, "List all branches.")
 	flag.BoolVar(&gittyOpts.truncateBranchName, "truncate", false, "Truncate branch names to 25 characters.")
 	flag.BoolVar(&gittyOpts.version, "version", false, "Print the version number.")
+	flag.StringVar(&gittyOpts.authorFilter, "author", "", "Filter commits by author name.") // New flag
 	flag.Parse()
 
 	// Display usage if no arguments or flags are provided
@@ -122,8 +124,8 @@ func main() {
 			}
 
 			err = branchIter.ForEach(func(branch *plumbing.Reference) error {
-				// Skip if no commits exists
-				_, err := repo.CommitObject(branch.Hash())
+				// Skip if no commits exist
+				commit, err := repo.CommitObject(branch.Hash())
 				if err != nil {
 					return nil
 				}
@@ -133,41 +135,26 @@ func main() {
 					return nil
 				}
 
-				var lastCommitSinceNow string
-
-				commit, err := repo.CommitObject(branch.Hash())
-				if err == nil {
-					duration := currentTime.Sub(commit.Author.When)
-					days := duration.Hours() / 24
-					hours := int(duration.Hours()) % 24
-					minutes := int(duration.Minutes()) % 60
-					lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
-				} else if err != nil {
-					log.Fatal(err)
+				// Filter by author
+				if gittyOpts.authorFilter != "" && commit.Author.Name != gittyOpts.authorFilter {
+					return nil
 				}
 
-				if gittyOpts.truncateBranchName {
-					branchName := branch.Name().Short()
-					if len(branchName) > maxBranchNameLength {
-						branchName = fmt.Sprintf("%.20s...", branchName)
-					}
+				duration := currentTime.Sub(commit.Author.When)
+				days := duration.Hours() / 24
+				hours := int(duration.Hours()) % 24
+				minutes := int(duration.Minutes()) % 60
+				lastCommitSinceNow = fmt.Sprintf("%dd %dh %dm", int(days), hours, minutes)
 
-					rows = append(rows, table.Row{
-						strings.TrimSuffix(filepath.Base(originRemote), ".git"),
-						"N/A",
-						branchName,
-						commit.Author.When,
-						lastCommitSinceNow,
-						commit.Author.Name,
-						joinedRemotes,
-					})
-					return nil
+				branchName := branch.Name().Short()
+				if gittyOpts.truncateBranchName && len(branchName) > maxBranchNameLength {
+					branchName = fmt.Sprintf("%.20s...", branchName)
 				}
 
 				rows = append(rows, table.Row{
 					strings.TrimSuffix(filepath.Base(originRemote), ".git"),
 					"N/A",
-					branch.Name().Short(),
+					branchName,
 					commit.Author.When,
 					lastCommitSinceNow,
 					commit.Author.Name,
@@ -187,8 +174,8 @@ func main() {
 			continue
 		}
 
-		// Skip if no commits exists
-		_, err = repo.CommitObject(head.Hash())
+		// Skip if no commits exist
+		commit, err := repo.CommitObject(head.Hash())
 		if err != nil {
 			continue
 		}
@@ -198,14 +185,9 @@ func main() {
 			continue
 		}
 
-		ref, err := repo.Reference(plumbing.HEAD, true)
-		if err != nil {
-			log.Fatalf("%s: %s", path, err)
-		}
-
-		commit, err := repo.CommitObject(ref.Hash())
-		if err != nil {
-			log.Fatal(err)
+		// Filter by author
+		if gittyOpts.authorFilter != "" && commit.Author.Name != gittyOpts.authorFilter {
+			continue
 		}
 
 		duration := currentTime.Sub(commit.Author.When)
@@ -221,13 +203,12 @@ func main() {
 		rows = append(rows, table.Row{
 			strings.TrimSuffix(filepath.Base(originRemote), ".git"),
 			fmt.Sprintf("%.2fMB", float64(size)/(1024*1024)),
-			ref.Name().Short(),
+			head.Name().Short(),
 			commit.Author.When,
 			lastCommitSinceNow,
 			commit.Author.Name,
 			joinedRemotes,
 		})
-
 	}
 
 	tw := table.NewWriter()
@@ -245,13 +226,6 @@ func main() {
 	tw.Style().Title.Align = text.AlignCenter
 	tw.SetStyle(table.StyleLight)
 	tw.SetOutputMirror(os.Stdout)
-	tw.SetColumnConfigs([]table.ColumnConfig{{
-		Name:        "last commit",
-		Transformer: text.NewTimeTransformer(time.RFC3339, nil),
-	}})
-	tw.SortBy([]table.SortBy{
-		{Name: "last commit", Mode: table.Dsc},
-	})
 	tw.Render()
 }
 
