@@ -33,12 +33,23 @@ var skipDirs = []string{
 
 func main() {
 	var gittyOpts gittyOptions
-	flag.StringVar(&gittyOpts.path, "path", ".", "The path to scan for branches.")
+	flag.StringVar(&gittyOpts.path, "path", "", "The path to scan for branches (required).")
 	flag.StringVar(&gittyOpts.skipDirs, "skip-dirs", "", "Comma separated list of directories to skip.")
-	flag.BoolVar(&gittyOpts.branches, "branches", false, "Loop through all branches.")
+	flag.BoolVar(&gittyOpts.branches, "branches", false, "List all branches.")
 	flag.BoolVar(&gittyOpts.truncateBranchName, "truncate", false, "Truncate branch names to 25 characters.")
 	flag.BoolVar(&gittyOpts.version, "version", false, "Print the version number.")
 	flag.Parse()
+
+	// Display usage if no arguments or flags are provided
+	if flag.NFlag() == 0 && flag.NArg() == 0 {
+		fmt.Println("Usage:")
+		flag.PrintDefaults()
+		os.Exit(1)
+	}
+
+	if flag.NArg() > 0 {
+		gittyOpts.path = flag.Arg(0)
+	}
 
 	if gittyOpts.version {
 		log.Println(buildinfo.Get())
