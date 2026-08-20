@@ -1,5 +1,10 @@
 # gitty
 
+[![CI](https://github.com/mikejoh/gitty/actions/workflows/go.yml/badge.svg)](https://github.com/mikejoh/gitty/actions/workflows/go.yml)
+[![Release](https://img.shields.io/github/v/release/mikejoh/gitty)](https://github.com/mikejoh/gitty/releases/latest)
+[![Go Report Card](https://goreportcard.com/badge/github.com/mikejoh/gitty)](https://goreportcard.com/report/github.com/mikejoh/gitty)
+[![License](https://img.shields.io/github/license/mikejoh/gitty)](https://github.com/mikejoh/gitty/blob/main/LICENSE)
+
 <p align="center">
 <img src="https://github.com/mikejoh/gitty/assets/899665/57b83aee-3f75-4cde-a6ad-e9e052f0d6ba" alt="gitty" />
 </p>
